@@ -7,8 +7,14 @@ env:
 
 jobs:
   testRunner:
-    name: Test all modes 📝
+    name: Test in ${{ matrix.testMode }} ✨
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        testMode:
+          - EditMode
+          - PlayMode
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -33,19 +39,21 @@ jobs:
         uses: actions/cache@v2
         with:
           path: Library
-          key: Library-test-project
+          key: Library-test-project-${{ matrix.targetPlatform }}
           restore-keys: |
             Library-test-project-
             Library-
 
-      - uses: webbertakken/unity-test-runner@v2
+      - uses: game-ci/unity-test-runner@v2.0-alpha-5
         id: testRunner
         with:
-          testMode: all
+          testMode: ${{ matrix.testMode }}
+          checkName: ${{ matrix.testMode }} test results
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/upload-artifact@v2
         with:
-          name: Test results (all modes)
+          name: Test results (${{ matrix.testMode }})
           path: ${{ steps.testRunner.outputs.artifactsPath }}
 
   buildWebGL:
@@ -83,7 +91,7 @@ jobs:
             Library-build-
             Library-
 
-      - uses: webbertakken/unity-builder@v2
+      - uses: game-ci/unity-builder@v2
         with:
           targetPlatform: WebGL
 
@@ -127,7 +135,7 @@ jobs:
             Library-build-
             Library-
 
-      - uses: webbertakken/unity-builder@v2
+      - uses: game-ci/unity-builder@v2
         with:
           targetPlatform: StandaloneWindows64
 
@@ -171,7 +179,7 @@ jobs:
             Library-build-
             Library-
 
-      - uses: webbertakken/unity-builder@v2
+      - uses: game-ci/unity-builder@v2
         with:
           targetPlatform: Android
 
@@ -199,4 +207,3 @@ jobs:
         with:
           branch: gh-pages
           folder: build/WebGL
-

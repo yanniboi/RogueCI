@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: webbertakken/unity-request-manual-activation-file@v2
+      - uses: game-ci/unity-request-activation-file@v2
         id: getManualLicenseFile
 
       - uses: actions/upload-artifact@v2
