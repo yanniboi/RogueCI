@@ -6,6 +6,12 @@ env:
   UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
 
 jobs:
+  checklicense:
+    name: Check License
+    runs-on: ubuntu-latest
+    steps:
+      - name: Unity - Activate
+        uses: game-ci/unity-activate@v1.3
   testRunner:
     name: Test in ${{ matrix.testMode }} ✨
     runs-on: ubuntu-latest
