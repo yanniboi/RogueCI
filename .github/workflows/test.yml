@@ -1,0 +1,78 @@
+name: Test
+
+on: 
+  workflow_call:
+    inputs:
+      projectPath:
+        required: false
+        default: ./
+        type: string
+
+jobs:
+  test-all-modes:
+    name: ${{ matrix.testMode }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        testMode:
+          - Playmode
+          - Editmode
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          lfs: true
+
+      - name: Create LFS file list
+        run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+
+      - name: Restore LFS cache
+        uses: actions/cache@v3
+        id: lfs-cache
+        with:
+          path: .git/lfs
+          key: ${{ runner.os }}-Lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      - name: Git LFS pull
+        run: |
+          git lfs pull
+          git add .
+          git reset --hard
+
+      - name: Restore library cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ inputs.projectPath }}/Library
+          key: Library-Test
+          restore-keys: |
+            Library-Build-
+            Library-
+
+      - name: Test
+        uses: game-ci/unity-test-runner@v2.1.0
+        id: tests
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          projectPath: ${{ inputs.projectPath }}
+          testMode: ${{ matrix.testMode }}
+          artifactsPath: tests/${{ matrix.testMode }}/artifacts
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Test Results ${{ matrix.testMode }}
+          coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+game.assembly.*'
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: TestResults${{ matrix.testMode }} 
+          path: ${{ steps.tests.outputs.artifactsPath }}
+
+      - name: Upload coverage results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: CoverageResults${{ matrix.testMode }} 
+          path: ${{ steps.tests.outputs.coveragePath }}

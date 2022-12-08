@@ -1,0 +1,52 @@
+name: Deploy
+
+on: 
+  workflow_call:
+    inputs:
+      projectName:
+        description: Name of the project
+        required: true
+        type: string
+      environment:
+        description: Name of environment for deployment
+        required: true
+        type: string
+
+jobs:
+  deploy-github-pages:
+    name: Github Pages
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ steps.deployment.outputs.page_url }}${{ inputs.environment }}
+    env:
+      targetPlatform: WebGL
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v2.1.2
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.projectName }}${{ env.targetPlatform }}
+          path: build/${{ env.targetPlatform }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: build/${{ env.targetPlatform }}
+          # "name" isn't implemented yet, see https://github.com/actions/upload-pages-artifact/issues/30 
+          # and upvote my pull request https://github.com/actions/upload-pages-artifact/pull/41
+          # name: ${{ inputs.projectName }}${{ env.targetPlatform }}GithubPages 
+
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
+        # with:
+        #   artifact_name: ${{ inputs.projectName }}${{ env.targetPlatform }}GithubPages

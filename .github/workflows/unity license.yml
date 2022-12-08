@@ -1,0 +1,30 @@
+# -------------------------------------------------------------------------
+# CI pipeline for creating a 'Manual Unity License Activation File'.
+#
+# Currently the only easy way to activate a 'free' Unity license is to
+# create an activation file and activate that manually through a website.
+# More info:
+#   * https://docs.unity3d.com/Manual/ManualActivationGuide.html
+#   * https://license.unity3d.com/manual
+# -------------------------------------------------------------------------
+
+name: Unity License
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  get-unity-license-activation-file:
+    name: Get Manual Activation File
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Request manual activation file
+        id: getManualLicenseFile
+        uses: game-ci/unity-request-activation-file@v2
+
+      - name: Upload artifact (Unity_v20X...X.alf)
+        uses: actions/upload-artifact@v2
+        with:
+          name: ManualUnityLicenseActivationFile
+          path: ${{ steps.getManualLicenseFile.outputs.filePath }}

@@ -1,0 +1,69 @@
+name: Build
+
+on: 
+  workflow_call:
+    inputs:
+      projectName:
+        required: true
+        type: string
+
+jobs:
+  build-all-target-platforms:
+    name: ${{ matrix.targetPlatform }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Names as specified in Unity - https://docs.unity3d.com/ScriptReference/BuildTarget.html
+        targetPlatform:
+          - Android
+          - StandaloneWindows64
+          - WebGL
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          lfs: true
+
+      - name: Create LFS file list
+        run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+
+      - name: Restore LFS cache
+        uses: actions/cache@v3
+        id: lfs-cache
+        with:
+          path: .git/lfs
+          key: ${{ runner.os }}-Lfs-${{ hashFiles('.lfs-assets-id') }}
+          restore-keys: |
+            ${{ runner.os }}-Lfs-
+            ${{ runner.os }}-
+
+      - name: Git LFS pull
+        run: |
+          git lfs pull
+          git add .
+          git reset --hard
+
+      - name: Restore library cache
+        uses: actions/cache@v3
+        with:
+          path: Library
+          key: Library-Build-${{ matrix.targetPlatform }}
+          restore-keys: |
+            Library-Build-
+            Library-
+
+      - name: Build
+        uses: game-ci/unity-builder@v2.1.2
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          buildName: ${{ inputs.projectName }}
+          targetPlatform: ${{ matrix.targetPlatform }}
+
+      - name: Upload build
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ inputs.projectName }}${{ matrix.targetPlatform }} 
+          path: build/${{ matrix.targetPlatform }}
