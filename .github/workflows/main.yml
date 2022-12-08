@@ -6,8 +6,6 @@ on:
     inputs:
       deployEnvironment:
           description: Environment for deployment
-          required: false
-          default: Develop
           type: environment
 
 jobs:
