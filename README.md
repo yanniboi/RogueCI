@@ -1,5 +1,9 @@
+
+
 # RogueCI
 A simple CI workflow for unity
+
+Requires a `UNITY_LICENSE` GitHub Actions secret.
 
 ### Video
 
